@@ -46,6 +46,10 @@
     
     <ItemGroup>
       <ProjectReference Include="..\eQuantic.Core.Domain\eQuantic.Core.Domain.csproj" />
+      <!-- Application knows domain AND datamodels: it maps between them and orchestrates persistence. -->
+      <PackageReference Include="eQuantic.Core.Data" Version="6.4.0" />       <!-- native repos, QueryOptions, IEntity -->
+      <PackageReference Include="eQuantic.Mapper" Version="2.2.1" />          <!-- domain ↔ datamodel mappers -->
+      <PackageReference Include="eQuantic.Core.CQS.Abstractions" Version="2.4.0" /> <!-- IOutboxRepository -->
     </ItemGroup>
-    
+
 </Project>
