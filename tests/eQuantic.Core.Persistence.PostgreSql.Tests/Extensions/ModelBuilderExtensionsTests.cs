@@ -111,7 +111,7 @@ public class ModelBuilderExtensionsTests
         var tableName = entityType!.GetTableName();
         tableName.Should().Be("example_entities");
         
-        var foreignKeys = entityType.GetForeignKeys();
+        var foreignKeys = entityType!.GetForeignKeys();
         foreignKeys.Should().HaveCount(3);
         
         var createdByForeignKey = foreignKeys.FirstOrDefault(fk => 
@@ -140,7 +140,7 @@ public class ModelBuilderExtensionsTests
         var tableName = entityType!.GetTableName();
         tableName.Should().Be("products");
         
-        var idProperty = entityType.FindProperty(nameof(ProductEntity.Id));
+        var idProperty = entityType!.FindProperty(nameof(ProductEntity.Id));
         idProperty.Should().NotBeNull();
         idProperty!.GetColumnName().Should().Be("product_id");
     }
@@ -165,7 +165,7 @@ public class ModelBuilderExtensionsTests
         var tableName = entityType!.GetTableName();
         tableName.Should().Be("products");
         
-        var createdAtProperty = entityType.FindProperty(nameof(IEntityTimeMark.CreatedAt));
+        var createdAtProperty = entityType!.FindProperty(nameof(IEntityTimeMark.CreatedAt));
         createdAtProperty.Should().NotBeNull();
         createdAtProperty!.GetDefaultValueSql().Should().Be("NOW() AT TIME ZONE 'UTC'");
     }

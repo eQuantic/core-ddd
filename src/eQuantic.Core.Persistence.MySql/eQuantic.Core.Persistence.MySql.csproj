@@ -5,8 +5,13 @@
         <RootNamespace>eQuantic.Core.Persistence.MySql</RootNamespace>
 
         <PackageTags>eQuantic;Core;Persistence;MySQL;Library</PackageTags>
-        <PackageReleaseNotes>Conventions for Persistence Layer with SQL Server</PackageReleaseNotes>
+        <PackageReleaseNotes>Conventions for Persistence Layer with MySQL</PackageReleaseNotes>
         <PackageIcon>Icon.png</PackageIcon>
+
+        <!-- Pomelo's MySQL provider (9.x) pins EF Core Relational to 9.x, but the eQuantic EF family
+             resolves 10.x; the two are compatible in practice. Suppress NU1608 until Pomelo ships an
+             EF Core 10 build. -->
+        <NoWarn>$(NoWarn);NU1608</NoWarn>
 
     </PropertyGroup>
 
