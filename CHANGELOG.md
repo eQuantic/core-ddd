@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.0.1](https://github.com/eQuantic/core-ddd/compare/v5.0.0...v5.0.1) (2026-07-25)
+
+### Bug Fixes
+
+* resolve build warnings and refresh the README for v5.0.0 ([31e5451](https://github.com/eQuantic/core-ddd/commit/31e5451f34ff0ea08afca9b989a85692bbcfd24c))
+
 ## [5.0.0](https://github.com/eQuantic/core-ddd/compare/v4.0.0...v5.0.0) (2026-07-24)
 
 ### ⚠ BREAKING CHANGES
