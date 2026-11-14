@@ -2,11 +2,11 @@ using eQuantic.Core.DataModel;
 using eQuantic.Core.Domain.Entities;
 using eQuantic.Core.Persistence.Extensions;
 using eQuantic.Core.Persistence.Options;
-using eQuantic.Core.Persistence.Tests.TestEntities;
+using eQuantic.Core.Persistence.EntityFramework.Tests.TestEntities;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-namespace eQuantic.Core.Persistence.Tests.Extensions;
+namespace eQuantic.Core.Persistence.EntityFramework.Tests.Extensions;
 
 [TestFixture]
 public class ModelBuilderExtensionsTests

@@ -1,7 +1,7 @@
 using eQuantic.Core.DataModel;
 using eQuantic.Core.Domain.Entities;
 
-namespace eQuantic.Core.Persistence.Tests.TestEntities;
+namespace eQuantic.Core.Persistence.EntityFramework.Tests.TestEntities;
 
 public class TestEntity : EntityDataBase, IEntityTimeMark, IEntityTimeTrack, IEntityTimeEnded, IEntityOwned, IEntityTrack, IEntityHistory
 {

@@ -24,6 +24,7 @@ These packages were extracted from [`eQuantic/core-api`](https://github.com/eQua
    - [eQuantic.Core.Application](#equanticcoreapplication)
    - [eQuantic.Core.Exceptions](#equanticcoreexceptions)
    - [eQuantic.Core.Persistence](#equanticcorepersistence)
+   - [eQuantic.Core.Persistence.EntityFramework](#equanticcorepersistenceentityframework)
    - [eQuantic.Core.Persistence.Relational](#equanticcorepersistencerelational)
    - [Provider packages: PostgreSQL, MySQL, SQL Server, MongoDB](#provider-packages)
 6. [The domain-persistence seam](#the-domain-persistence-seam)
@@ -56,12 +57,13 @@ In practice, every service re-implements the same plumbing: an aggregate root th
 | [`eQuantic.Core.Domain`](https://www.nuget.org/packages/eQuantic.Core.Domain) | `AggregateRoot`, `EntityBase`, `ValueObject`, entity contracts, request/result models, query-string filtering & sorting | `eQuantic.Core`, `eQuantic.Linq.Web`, `eQuantic.Core.DomainEvents` |
 | [`eQuantic.Core.Application`](https://www.nuget.org/packages/eQuantic.Core.Application) | `IApplicationContext`, an injectable clock, and the request → `QueryOptions` bridge | `eQuantic.Core.Domain`, `eQuantic.Core.Data`, `eQuantic.Mapper`, `eQuantic.Core.CQS.Abstractions` |
 | [`eQuantic.Core.Exceptions`](https://www.nuget.org/packages/eQuantic.Core.Exceptions) | A vocabulary of domain exceptions that map to HTTP semantics | — (stand-alone) |
-| [`eQuantic.Core.Persistence`](https://www.nuget.org/packages/eQuantic.Core.Persistence) | The **domain-persistence seam** (aggregate repository, tracker, outbox unit of work) + EF Core auditing conventions | `eQuantic.Core.Application`, `eQuantic.Core.DataModel` |
-| [`eQuantic.Core.Persistence.Relational`](https://www.nuget.org/packages/eQuantic.Core.Persistence.Relational) | Table naming (pluralize + case), fully-qualified PKs, user-audit foreign keys | `eQuantic.Core.Persistence` |
+| [`eQuantic.Core.Persistence`](https://www.nuget.org/packages/eQuantic.Core.Persistence) | The **domain-persistence seam** (aggregate repository, tracker, outbox unit of work) over any `eQuantic.Core.Data` repository. No Entity Framework | `eQuantic.Core.Application`, `eQuantic.Core.DataModel` |
+| [`eQuantic.Core.Persistence.EntityFramework`](https://www.nuget.org/packages/eQuantic.Core.Persistence.EntityFramework) | EF Core DataModel conventions: audit columns, `HasJsonData` seeding | `eQuantic.Core.Persistence`, `eQuantic.Core.Data.EntityFramework` |
+| [`eQuantic.Core.Persistence.Relational`](https://www.nuget.org/packages/eQuantic.Core.Persistence.Relational) | Table naming (pluralize + case), fully-qualified PKs, user-audit foreign keys | `…Persistence.EntityFramework` |
 | [`eQuantic.Core.Persistence.PostgreSql`](https://www.nuget.org/packages/eQuantic.Core.Persistence.PostgreSql) | PostgreSQL defaults (snake_case, UTC `CreatedAt` default) | `…Persistence.Relational` |
 | [`eQuantic.Core.Persistence.MySql`](https://www.nuget.org/packages/eQuantic.Core.Persistence.MySql) | MySQL defaults (snake_case, UTC `CreatedAt` default) | `…Persistence.Relational` |
 | [`eQuantic.Core.Persistence.SqlServer`](https://www.nuget.org/packages/eQuantic.Core.Persistence.SqlServer) | SQL Server defaults (PascalCase, UTC `CreatedAt` default) | `…Persistence.Relational` |
-| [`eQuantic.Core.Persistence.MongoDb`](https://www.nuget.org/packages/eQuantic.Core.Persistence.MongoDb) | MongoDB collection/element naming conventions | `…Persistence` |
+| [`eQuantic.Core.Persistence.MongoDb`](https://www.nuget.org/packages/eQuantic.Core.Persistence.MongoDb) | MongoDB collection/element naming conventions | `…Persistence.EntityFramework` |
 
 > **Two companion packages** complete the picture: **`eQuantic.Core.DomainEvents`** provides the event-raising `AggregateRoot` base, and **`eQuantic.Core.DataModel`** (which lives in [`eQuantic/core-data`](https://github.com/eQuantic/core-data)) owns the `IEntity`/`EntityDataBase` storage contracts and the user-audit interfaces (`IEntityOwned`, `IEntityTrack`, `IEntityHistory`). Your **aggregates** come from `eQuantic.Core.Domain`; your **DataModels** implement `IEntity` from `eQuantic.Core.DataModel`; the seam maps between them.
 
@@ -79,6 +81,7 @@ graph TD
     end
     subgraph Infrastructure layer
         P[eQuantic.Core.Persistence]
+        EF[eQuantic.Core.Persistence.EntityFramework]
         R[eQuantic.Core.Persistence.Relational]
         PG[eQuantic.Core.Persistence.PostgreSql]
         MY[eQuantic.Core.Persistence.MySql]
@@ -89,11 +92,12 @@ graph TD
 
     A --> D
     P --> A
-    R --> P
+    EF --> P
+    R --> EF
     PG --> R
     MY --> R
     MS --> R
-    MG --> P
+    MG --> EF
 
     style D fill:#2d6a4f,color:#fff
     style A fill:#40916c,color:#fff
@@ -114,7 +118,20 @@ Domain aggregate ──map (eQuantic.Mapper)──► DataModel ──► databa
 
 ## Installation
 
-Take only what your layer needs. A typical web API that persists aggregates to PostgreSQL uses:
+Take only what your layer needs. There are two ways to persist aggregates, and they share the same seam.
+
+**Over a native `eQuantic.Core.Data` engine**, with no Entity Framework anywhere in the graph:
+
+```bash
+dotnet add package eQuantic.Core.Domain
+dotnet add package eQuantic.Core.Exceptions
+dotnet add package eQuantic.Core.Persistence
+dotnet add package eQuantic.Core.Data.PostgreSql   # or .SqlServer, .MySql, .MongoDb, .CosmosDb, .Cassandra
+```
+
+`eQuantic.Core.Persistence` brings `…Application` and `…Domain` with it, and nothing of EF Core.
+
+**Over Entity Framework Core**, with the model conventions of one database:
 
 ```bash
 dotnet add package eQuantic.Core.Domain
@@ -122,7 +139,9 @@ dotnet add package eQuantic.Core.Exceptions
 dotnet add package eQuantic.Core.Persistence.PostgreSql
 ```
 
-Because the persistence packages reference each other transitively, adding `eQuantic.Core.Persistence.PostgreSql` also brings in `…Relational`, `…Persistence`, `…Application` and `…Domain`. Swap the last line for `…MySql`, `…SqlServer` or `…MongoDb` to target a different store.
+Because the persistence packages reference each other transitively, adding `eQuantic.Core.Persistence.PostgreSql` also brings in `…Relational`, `…Persistence.EntityFramework`, `…Persistence`, `…Application` and `…Domain`. Swap the last line for `…MySql`, `…SqlServer` or `…MongoDb` to target a different store.
+
+None of the packages brings an IoC container: they register through `Microsoft.Extensions.DependencyInjection`. If you use Lamar, reference it yourself.
 
 ---
 
@@ -304,7 +323,13 @@ var order = await orders.GetAsync(id) ?? throw new EntityNotFoundException<Guid>
 
 ### eQuantic.Core.Persistence
 
-This package has two responsibilities. The first — the [domain-persistence seam](#the-domain-persistence-seam) — is the flagship and has its own section below. The second is a set of provider-agnostic **Entity Framework Core conventions** for shaping the tables your **DataModels** map to.
+The [domain-persistence seam](#the-domain-persistence-seam), which has its own section below: the aggregate repository, the tracker, the outbox unit of work and `UseApplicationAudit`. It works over any `eQuantic.Core.Data` repository, the native engines and the Entity Framework family alike, and depends on no Entity Framework itself. A test holds it there, together with `eQuantic.Core.Application`: it fails if EF Core, Humanizer or Lamar reaches their dependencies again.
+
+---
+
+### eQuantic.Core.Persistence.EntityFramework
+
+A set of provider-agnostic **Entity Framework Core conventions** for shaping the tables your **DataModels** map to. Up to 6.x they shipped inside `eQuantic.Core.Persistence`. They keep its namespaces (`eQuantic.Core.Persistence.Extensions`, `eQuantic.Core.Persistence.Options`), so code that calls them reads the same.
 
 Call the convention from `OnModelCreating` and, when auditing is enabled, it configures the audit columns of every entity type based on the interfaces it implements:
 
@@ -338,7 +363,7 @@ modelBuilder.Entity<Country>()
 
 ### eQuantic.Core.Persistence.Relational
 
-Everything in the base package, **plus relational naming conventions**. Call `ApplyRelationalDataModelConventions` and each entity gets a consistent table name and (optionally) fully-qualified primary-key columns and audit foreign keys:
+Everything in `eQuantic.Core.Persistence.EntityFramework`, **plus relational naming conventions**. Call `ApplyRelationalDataModelConventions` and each entity gets a consistent table name and (optionally) fully-qualified primary-key columns and audit foreign keys:
 
 ```csharp
 using eQuantic.Core.Persistence.Relational.Extensions;
@@ -378,7 +403,7 @@ Every default is overridable through the options callback (the same fluent optio
 
 ## The domain-persistence seam
 
-This is the piece that lets you keep aggregates **pure** and still persist them reliably. It lives in `eQuantic.Core.Persistence` and is built on the native `eQuantic.Core.Data` repository engine plus `eQuantic.Mapper`.
+This is the piece that lets you keep aggregates **pure** and still persist them reliably. It lives in `eQuantic.Core.Persistence` and is built on the `eQuantic.Core.Data` repository contracts plus `eQuantic.Mapper`, so it runs over a native engine (`eQuantic.Core.Data.PostgreSql` and its siblings) with no Entity Framework at all, or over the `eQuantic.Core.Data.EntityFramework` family.
 
 The three moving parts:
 
@@ -492,7 +517,13 @@ app.MapGet("/v1/orders", async ([AsParameters] PagedListRequest<OrderData> reque
 
 This repository follows [**Semantic Versioning**](https://semver.org) and publishes to NuGet automatically with [`semantic-release`](https://semantic-release.gitbook.io). You never bump a version by hand — the version is computed from commit messages on every push to `main`.
 
-The packages were extracted from `core-api` at its `v4.0.0` release; the tactical DDD building blocks and the domain-persistence seam then shipped as the breaking **`v5.0.0`**, which is the current line.
+The packages were extracted from `core-api` at its `v4.0.0` release; the tactical DDD building blocks and the domain-persistence seam then shipped as the breaking **`v5.0.0`**. `v6.0.0` moved to `eQuantic.Core.Data` 7.0, and `v7.0.0` took Entity Framework out of `eQuantic.Core.Persistence` and Lamar out of `eQuantic.Core.Application`.
+
+### Upgrading to 7.0
+
+- **You call the EF conventions** (`ApplyDataModelConventions`, `HasJsonData`, `DataModelConventionOptions`) **with only `eQuantic.Core.Persistence` referenced**: add `eQuantic.Core.Persistence.EntityFramework`. The namespaces did not change. If you reference a provider package (`…PostgreSql`, `…MySql`, `…SqlServer`, `…MongoDb`, `…Relational`), it brings the new package and nothing changes for you.
+- **You used Lamar** (`ServiceRegistry`, `UseLamar`) **through `eQuantic.Core.Application`**: reference `Lamar` yourself.
+- **You used Humanizer through `eQuantic.Core.Persistence`**: reference `Humanizer` yourself. The provider packages that name tables with it still bring it.
 
 | Commit type | Example | Resulting bump |
 |---|---|---|
