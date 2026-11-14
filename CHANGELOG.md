@@ -1,5 +1,15 @@
 # Changelog
 
+## [6.0.0](https://github.com/eQuantic/core-ddd/compare/v5.0.1...v6.0.0) (2026-11-14)
+
+### ⚠ BREAKING CHANGES
+
+* core-ddd now depends on eQuantic.Core.Data 7.0, whose repositories change what some existing calls do (a duplicate key surfaces as DuplicateKeyException at commit, among others). Applications get that behaviour through core-ddd, and must reference the 7.0 line of eQuantic.Core.Data and its EF family.
+
+### Features
+
+* move to eQuantic.Core.Data 7.0 and publish through trusted publishing ([#3](https://github.com/eQuantic/core-ddd/issues/3)) ([9d05ae6](https://github.com/eQuantic/core-ddd/commit/9d05ae6d04663141ece0c45131f0353289c85eb8))
+
 ## [5.0.1](https://github.com/eQuantic/core-ddd/compare/v5.0.0...v5.0.1) (2026-07-25)
 
 ### Bug Fixes
