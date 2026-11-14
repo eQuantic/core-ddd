@@ -1,5 +1,15 @@
 # Changelog
 
+## [7.0.0](https://github.com/eQuantic/core-ddd/compare/v6.0.0...v7.0.0) (2026-11-14)
+
+### ⚠ BREAKING CHANGES
+
+* a project that calls ApplyDataModelConventions, HasJsonData or DataModelConventionOptions with only eQuantic.Core.Persistence referenced now needs eQuantic.Core.Persistence.EntityFramework (a provider package brings it). A project that used Lamar through eQuantic.Core.Application, or Humanizer through eQuantic.Core.Persistence, references it itself.
+
+### Features
+
+* the aggregate seam without Entity Framework, and Application without Lamar ([#5](https://github.com/eQuantic/core-ddd/issues/5)) ([1c2b88a](https://github.com/eQuantic/core-ddd/commit/1c2b88a84cfb5025d2443479c7c4cd575ace89da))
+
 ## [6.0.0](https://github.com/eQuantic/core-ddd/compare/v5.0.1...v6.0.0) (2026-11-14)
 
 ### ⚠ BREAKING CHANGES
