@@ -1,7 +1,7 @@
-using eQuantic.Core.Persistence.Tests.TestEntities;
+using eQuantic.Core.Persistence.EntityFramework.Tests.TestEntities;
 using Microsoft.EntityFrameworkCore;
 
-namespace eQuantic.Core.Persistence.Tests;
+namespace eQuantic.Core.Persistence.EntityFramework.Tests;
 
 public class TestDbContext : DbContext
 {

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <Description>eQuantic Persistence with MySQL Library</Description>
@@ -26,6 +26,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\eQuantic.Core.Persistence.Relational\eQuantic.Core.Persistence.Relational.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Humanizer" Version="3.0.1" />
     </ItemGroup>
     
     <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">

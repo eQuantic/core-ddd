@@ -1,11 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
+    <!--
+        The aggregate seam: AggregateRepository, AggregateTracker and the unit of work that drains domain
+        events into the outbox, over the native eQuantic.Core.Data repositories. It must not depend on
+        Entity Framework Core or Humanizer: those belong to eQuantic.Core.Persistence.EntityFramework, so a
+        project on a native engine takes the seam alone. PersistenceDependencyTests fails if either returns.
+    -->
     <PropertyGroup>
         <Description>eQuantic Persistence Library</Description>
         <RootNamespace>eQuantic.Core.Persistence</RootNamespace>
 
         <PackageTags>eQuantic;Core;Persistence;Library</PackageTags>
-        <PackageReleaseNotes>Conventions for Persistence Layer</PackageReleaseNotes>
+        <PackageReleaseNotes>Aggregate repository and outbox unit of work over the native eQuantic.Core.Data repositories</PackageReleaseNotes>
         <PackageIcon>Icon.png</PackageIcon>
 
     </PropertyGroup>
@@ -25,21 +31,5 @@
 
     <ItemGroup>
         <PackageReference Include="eQuantic.Core.DataModel" Version="7.0.0" />
-        <PackageReference Include="Humanizer" Version="3.0.1" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-        <PackageReference Include="eQuantic.Core.Data.EntityFramework" Version="8.7.0" />
-    </ItemGroup>
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
-        <PackageReference Include="eQuantic.Core.Data.EntityFramework" Version="10.6.0" />
-    </ItemGroup>
-    
-    <ItemGroup>
-        <InternalsVisibleTo Include="eQuantic.Core.Persistence.Relational" />
-        <InternalsVisibleTo Include="eQuantic.Core.Persistence.PostgreSql" />
-        <InternalsVisibleTo Include="eQuantic.Core.Persistence.MongoDb" />
-        <InternalsVisibleTo Include="eQuantic.Core.Persistence.MySql" />
-        <InternalsVisibleTo Include="eQuantic.Core.Persistence.SqlServer" />
     </ItemGroup>
 </Project>
