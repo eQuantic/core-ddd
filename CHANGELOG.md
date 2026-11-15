@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.1.0](https://github.com/eQuantic/core-ddd/compare/v7.0.0...v7.1.0) (2026-11-15)
+
+### Features
+
+* move to eQuantic.Core.Data 7.1 and the Entity Framework family on it ([#7](https://github.com/eQuantic/core-ddd/issues/7)) ([78572f0](https://github.com/eQuantic/core-ddd/commit/78572f0f4f5e4ed10a81141598cd8ac34d5a94e1)), closes [#6](https://github.com/eQuantic/core-ddd/issues/6)
+
 ## [7.0.0](https://github.com/eQuantic/core-ddd/compare/v6.0.0...v7.0.0) (2026-11-14)
 
 ### ⚠ BREAKING CHANGES
