@@ -27,6 +27,6 @@
         <PackageReference Include="eQuantic.Core.Data.EntityFramework.SqlServer" Version="8.7.0" />
     </ItemGroup>
     <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
-        <PackageReference Include="eQuantic.Core.Data.EntityFramework.SqlServer" Version="10.6.0" />
+        <PackageReference Include="eQuantic.Core.Data.EntityFramework.SqlServer" Version="10.6.1" />
     </ItemGroup>
 </Project>
