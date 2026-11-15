@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.1.1](https://github.com/eQuantic/core-ddd/compare/v7.1.0...v7.1.1) (2026-11-15)
+
+### Bug Fixes
+
+* **deps:** the Entity Framework family without known vulnerabilities ([#9](https://github.com/eQuantic/core-ddd/issues/9)) ([ad1ee75](https://github.com/eQuantic/core-ddd/commit/ad1ee758a623935729f9c64a857ff2edf3ef8d37)), closes [#8](https://github.com/eQuantic/core-ddd/issues/8)
+
 ## [7.1.0](https://github.com/eQuantic/core-ddd/compare/v7.0.0...v7.1.0) (2026-11-15)
 
 ### Features
