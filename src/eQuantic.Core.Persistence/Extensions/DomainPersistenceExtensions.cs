@@ -17,8 +17,34 @@ public static class DomainPersistenceExtensions
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection, for chaining.</returns>
-    public static IServiceCollection AddDomainPersistence(this IServiceCollection services)
+    public static IServiceCollection AddDomainPersistence(this IServiceCollection services) =>
+        services.AddDomainPersistence(_ => { });
+
+    /// <summary>
+    /// Registers the seam as <see cref="AddDomainPersistence(IServiceCollection)" /> does, with
+    /// <see cref="DomainPersistenceOptions" /> configured by <paramref name="configure" />. Called more than once, each
+    /// call configures the same options.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">Sets the options, e.g. <c>options =&gt; options.RefuseWholeRowWrites = true</c>.</param>
+    /// <returns>The service collection, for chaining.</returns>
+    public static IServiceCollection AddDomainPersistence(
+        this IServiceCollection services,
+        Action<DomainPersistenceOptions> configure)
     {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var options = services
+            .LastOrDefault(descriptor => descriptor.ServiceType == typeof(DomainPersistenceOptions))
+            ?.ImplementationInstance as DomainPersistenceOptions;
+        if (options is null)
+        {
+            options = new DomainPersistenceOptions();
+            services.AddSingleton(options);
+        }
+
+        configure(options);
+
         services.AddScoped<IAggregateTracker, AggregateTracker>();
         services.AddScoped(typeof(IAggregateRepository<,,>), typeof(AggregateRepository<,,>));
         services.AddScoped<IDomainUnitOfWork, DomainEventDispatchingUnitOfWork>();

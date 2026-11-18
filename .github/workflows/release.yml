@@ -39,6 +39,10 @@ jobs:
         run: dotnet build eQuantic.Core.DDD.sln -c Release --no-restore
       - name: Test (net8.0 + net10.0)
         run: dotnet test eQuantic.Core.DDD.sln -c Release --no-build --logger "console;verbosity=minimal"
+        env:
+          # The engine tests start PostgreSQL in a container: Linux runners have Docker, so a failure to start
+          # fails the run there instead of skipping the proof. Windows runners cannot run the image.
+          CORE_DDD_ENGINE_TESTS: ${{ runner.os == 'Linux' && 'required' || '' }}
 
   release:
     name: Semantic release
