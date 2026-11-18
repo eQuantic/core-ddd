@@ -409,7 +409,7 @@ The three moving parts:
 
 | Type | Role |
 |---|---|
-| `IAggregateRepository<TAggregate, TData, TKey>` | Loads/stages an **aggregate** by mapping it to/from its **DataModel** (via `eQuantic.Mapper`) and delegating to the native repository. On every write it records the aggregate with the tracker. |
+| `IAggregateRepository<TAggregate, TData, TKey>` | Loads/stages an **aggregate** by mapping it to/from its **DataModel** (via `eQuantic.Mapper`) and delegating to the native repository. A save writes only the members the aggregate changed since it was loaded. On every write it records the aggregate with the tracker. |
 | `IAggregateTracker` | Collects the aggregates mutated in the current unit of work, so their events can be drained on commit. Scoped (one per request). |
 | `IDomainUnitOfWork` | On `CommitAsync()`, drains each tracked aggregate's uncommitted domain events, stages them as **outbox** messages, and commits the native unit of work — so the DataModels **and** the outbox rows land in **one transaction**. |
 
@@ -458,6 +458,23 @@ public async Task Handle(
     await orders.AddAsync(order);      // maps Order → OrderData, tracks the aggregate
     await unitOfWork.CommitAsync();    // writes OrderData AND stages OrderPlaced in the outbox — atomically
 }
+```
+
+**A save writes what the aggregate changed.** The repository remembers what each aggregate it loads (`GetAsync`) or adds (`AddAsync`) maps to, and `ModifyAsync` writes only the DataModel members whose mapped value changed since, through the native repository's member-scoped `IPartialModifyRepository`. Two requests that load the same row and change different members both keep their change, and a column the aggregate does not carry keeps what the store holds. A save that changed nothing writes nothing, and still drains the aggregate's events.
+
+```csharp
+var order = await orders.GetAsync(id);     // remembers what Order maps to
+order!.Ship();                             // changes Status only
+await orders.ModifyAsync(order);           // UPDATE … SET status = … (and the update's lifecycle stamps)
+await unitOfWork.CommitAsync();
+```
+
+Values are compared by content: a `JsonNode` or a byte array changed in place counts, a date's kind and an offset's offset count, and a member that cannot be compared counts as changed. Members marked `[Unmapped]` and navigations are never written.
+
+An aggregate the repository did not load or add in its scope, and a native repository without member-scoped writes (the Entity Framework family), still get a whole-row write, which puts back every column as the aggregate maps it. To refuse that instead:
+
+```csharp
+services.AddDomainPersistence(options => options.RefuseWholeRowWrites = true);   // ModifyAsync throws InvalidOperationException
 ```
 
 **Stamp the auditing user.** The native engine already stamps `CreatedAt`/`UpdatedAt`/`DeletedAt` and honours soft delete by convention; `UseApplicationAudit()` fills in *who* by resolving the current user from `IApplicationContext`:
