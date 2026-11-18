@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.2.0](https://github.com/eQuantic/core-ddd/compare/v7.1.1...v7.2.0) (2026-11-18)
+
+### Features
+
+* an aggregate saves the members it changed, never its whole row ([#11](https://github.com/eQuantic/core-ddd/issues/11)) ([0cd1570](https://github.com/eQuantic/core-ddd/commit/0cd1570653c143603cdbaea6829a79e235427ff3)), closes [#10](https://github.com/eQuantic/core-ddd/issues/10)
+
 ## [7.1.1](https://github.com/eQuantic/core-ddd/compare/v7.1.0...v7.1.1) (2026-11-15)
 
 ### Bug Fixes
