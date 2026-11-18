@@ -107,7 +107,7 @@ internal sealed class DataModelSnapshot<TData>
 
     /// <summary>
     /// A copy of <paramref name="value" /> that nothing can change afterwards: scalars and strings as they are, byte
-    /// arrays copied, JSON nodes deep-cloned, anything else as its JSON serialization.
+    /// arrays copied, JSON values as a deep-cloned <see cref="JsonNode" />, anything else as its JSON serialization.
     /// </summary>
     private static object? Capture(object? value)
     {
@@ -122,10 +122,14 @@ internal sealed class DataModelSnapshot<TData>
                 return bytes.ToArray();
             case JsonNode node:
                 return node.DeepClone();
+            // A default JsonElement holds no value. Every other JSON value is kept as a node, so it compares by content
+            // as a JsonNode member does: formatting and property order are not changes.
+            case JsonElement { ValueKind: JsonValueKind.Undefined }:
+                return null;
             case JsonElement element:
-                return new Serialized(element.GetRawText());
+                return JsonNode.Parse(element.GetRawText());
             case JsonDocument document:
-                return new Serialized(document.RootElement.GetRawText());
+                return JsonNode.Parse(document.RootElement.GetRawText());
         }
 
         try

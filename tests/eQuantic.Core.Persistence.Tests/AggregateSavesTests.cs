@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using eQuantic.Core.Data.Modeling;
 using eQuantic.Core.Data.Query;
@@ -26,6 +27,8 @@ public sealed class Shipment : eQuantic.Core.Domain.Entities.AggregateRoot<Guid>
     public JsonNode? Details { get; set; }
     public byte[] Label { get; set; } = [];
     public List<string> Lines { get; set; } = [];
+    public JsonElement Attributes { get; set; }
+    public JsonDocument? Manifest { get; set; }
 }
 
 public sealed class ShipmentData : IEntity<Guid>
@@ -37,6 +40,8 @@ public sealed class ShipmentData : IEntity<Guid>
     public JsonNode? Details { get; set; }
     public byte[] Label { get; set; } = [];
     public List<string> Lines { get; set; } = [];
+    public JsonElement Attributes { get; set; }
+    public JsonDocument? Manifest { get; set; }
 
     /// <summary>A column the aggregate does not carry: its mapper leaves it at the default.</summary>
     public string? Note { get; set; }
@@ -115,6 +120,8 @@ public sealed class AggregateSavesTests
         Details = shipment.Details,
         Label = shipment.Label,
         Lines = shipment.Lines,
+        Attributes = shipment.Attributes,
+        Manifest = shipment.Manifest,
     };
 
     private static Shipment ToDomain(ShipmentData data) => new(data.Id)
@@ -125,6 +132,8 @@ public sealed class AggregateSavesTests
         Details = data.Details,
         Label = data.Label,
         Lines = data.Lines,
+        Attributes = data.Attributes,
+        Manifest = data.Manifest,
     };
 
     private AggregateRepository<Shipment, ShipmentData, Guid> Repository(bool refuseWholeRowWrites = false) =>
@@ -141,6 +150,7 @@ public sealed class AggregateSavesTests
             Details = JsonNode.Parse("""{"weight":2,"tags":["fragile"]}"""),
             Label = [1, 2, 3],
             Lines = ["a", "b"],
+            Manifest = JsonDocument.Parse("""{"a":2,"b":1}"""),
             Note = "kept by the store",
             Display = "acme (open)",
             Carrier = new CarrierData { Id = Guid.NewGuid() },
@@ -236,6 +246,40 @@ public sealed class AggregateSavesTests
         await repository.ModifyAsync(shipment);
 
         _partialWrites.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task A_default_json_element_holds_no_value_and_is_not_written()
+    {
+        // Attributes is never set: a default JsonElement, whose raw text cannot be read.
+        var (repository, shipment) = await Loaded();
+
+        shipment.Status = "shipped";
+        await repository.ModifyAsync(shipment);
+
+        _partialWrites.Should().ContainSingle().Which.Should().Equal("Status");
+    }
+
+    [Test]
+    public async Task A_json_document_with_the_same_content_formatted_differently_is_not_written()
+    {
+        var (repository, shipment) = await Loaded();
+
+        shipment.Manifest = JsonDocument.Parse("""{ "b": 1, "a": 2 }""");
+        await repository.ModifyAsync(shipment);
+
+        _partialWrites.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task A_json_element_with_another_value_is_written()
+    {
+        var (repository, shipment) = await Loaded();
+
+        shipment.Attributes = JsonDocument.Parse("""{"hazmat":true}""").RootElement;
+        await repository.ModifyAsync(shipment);
+
+        _partialWrites.Should().ContainSingle().Which.Should().Equal("Attributes");
     }
 
     [Test]
@@ -338,6 +382,21 @@ public sealed class AggregateSavesTests
             .Which.Message.Should().Contain(nameof(Shipment)).And.Contain("did not load or add");
         await _native.DidNotReceive().ModifyAsync(Arg.Any<ShipmentData>());
         _partialWrites.Should().BeEmpty();
+        // Not tracked: a commit after the refusal must not publish events for a change that was never written.
+        _tracker.DrainTracked().Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task A_save_whose_stage_failed_publishes_no_events()
+    {
+        var (repository, shipment) = await Loaded();
+        _failNextStage = true;
+
+        shipment.Customer = "globex";
+        var save = () => repository.ModifyAsync(shipment);
+
+        await save.Should().ThrowAsync<InvalidOperationException>();
+        _tracker.DrainTracked().Should().BeEmpty();
     }
 
     [Test]

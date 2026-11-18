@@ -105,18 +105,18 @@ public sealed class AggregateRepository<TAggregate, TData, TKey>
     /// <inheritdoc />
     public async Task AddAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
-        _tracker.Track(aggregate);
         var data = ToData(aggregate);
         // Taken before the native repository stamps its lifecycle members on the DataModel.
         var snapshot = DataModelSnapshot<TData>.Take(data);
         await _repository.AddAsync(data, cancellationToken).ConfigureAwait(false);
         _snapshots.AddOrUpdate(aggregate, snapshot);
+        // Tracked once its write is staged: an aggregate whose write failed must not publish its events.
+        _tracker.Track(aggregate);
     }
 
     /// <inheritdoc />
     public async Task ModifyAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
-        _tracker.Track(aggregate);
         var data = ToData(aggregate);
         var current = DataModelSnapshot<TData>.Take(data);
 
@@ -138,21 +138,24 @@ public sealed class AggregateRepository<TAggregate, TData, TKey>
                 await partial.ModifyAsync(data, DataModelSnapshot<TData>.Selector(changed)).ConfigureAwait(false);
             }
 
-            // Only once the write is staged: a stage that throws leaves the change to be written by the next save.
+            // Only once the write is staged: a stage that throws leaves the change to be written by the next save, and a
+            // refused or failed save publishes no events. A save with nothing to write still drains them.
             _snapshots.AddOrUpdate(aggregate, current);
+            _tracker.Track(aggregate);
             return;
         }
 
         await _repository.ModifyAsync(data).ConfigureAwait(false);
         _snapshots.AddOrUpdate(aggregate, current);
+        _tracker.Track(aggregate);
     }
 
     /// <inheritdoc />
     public async Task RemoveAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
     {
-        _tracker.Track(aggregate);
         await _repository.RemoveAsync(ToData(aggregate)).ConfigureAwait(false);
         _snapshots.Remove(aggregate);
+        _tracker.Track(aggregate);
     }
 
     private void RefuseWholeRow(string reason)
