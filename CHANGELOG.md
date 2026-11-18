@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.2.1](https://github.com/eQuantic/core-ddd/compare/v7.2.0...v7.2.1) (2026-11-18)
+
+### Bug Fixes
+
+* **deps:** move to eQuantic.Core.Data 7.1.1 ([#13](https://github.com/eQuantic/core-ddd/issues/13)) ([2a1c5a1](https://github.com/eQuantic/core-ddd/commit/2a1c5a18761819ae178b900a2e419c68cfe8094f)), closes [#12](https://github.com/eQuantic/core-ddd/issues/12)
+
 ## [7.2.0](https://github.com/eQuantic/core-ddd/compare/v7.1.1...v7.2.0) (2026-11-18)
 
 ### Features
